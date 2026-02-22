@@ -1,0 +1,7 @@
+{
+  "name": "Heritage Housing - Secure Portal",
+  "description": "Production-ready, encrypted application portal for mobile home buyers with salesman-only dashboard access.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
