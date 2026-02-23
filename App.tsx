@@ -304,7 +304,7 @@ const App: React.FC = () => {
       case 'LANDING':
         return (
           <LandingPage
-            onStartApplication={() => setCurrentStep('FINANCING_INFO')}
+            onStart={() => setCurrentStep('FINANCING_INFO')}
             onLanguageChange={setLanguage}
             language={language}
           />
