@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { AppStep, ApplicationData, CoSignerData, DocumentFile, EarnestDepositData, LeadApplication, Language, AppointmentOnlyData } from './types';
+import { AppStep, ApplicationData, CoSignerData, DocumentFile, EarnestDepositData, LeadApplication, Language } from './types';
 import LandingPage from './components/LandingPage';
 import FinancingInfoPage from './components/FinancingInfoPage';
 import UnifiedApplicationForm from './components/UnifiedApplicationForm';
@@ -8,7 +8,6 @@ import CoSignerForm from './components/CoSignerForm';
 import DocumentUpload from './components/DocumentUpload';
 import Dashboard from './components/Dashboard';
 import SuccessScreen from './components/SuccessScreen';
-import AppointmentOnlyForm from './components/AppointmentOnlyForm';
 import { storageService } from './services/storageService';
 import { t } from './constants';
 
@@ -49,24 +48,37 @@ function registerAppointmentForReminders(phone: string, name: string, appointmen
 /** Save application to Supabase cloud database */
 async function saveToSupabase(id: string, data: ApplicationData): Promise<boolean> {
   const base = typeof window !== 'undefined' ? window.location.origin : '';
+  console.log('[saveToSupabase] Starting save for ID:', id);
+  console.log('[saveToSupabase] Base URL:', base);
+  
   try {
+    const payload = {
+      id: id,
+      encrypted: JSON.stringify(data),
+      submitted_at: new Date().toISOString()
+    };
+    console.log('[saveToSupabase] Payload:', payload);
+    
     const response = await fetch(`${base}/api/saveApplication`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        id: id,
-        encrypted: JSON.stringify(data),
-        submitted_at: new Date().toISOString()
-      })
+      body: JSON.stringify(payload)
     });
+    
+    console.log('[saveToSupabase] Response status:', response.status);
+    
     if (!response.ok) {
-      console.error('Failed to save to Supabase', await response.text());
+      const errorText = await response.text();
+      console.error('[saveToSupabase] Failed:', response.status, errorText);
+      alert('Failed to save to cloud: ' + errorText);
       return false;
     }
-    console.log('Saved to Supabase successfully');
+    
+    console.log('[saveToSupabase] Success!');
     return true;
   } catch (err) {
-    console.error('Error saving to Supabase', err);
+    console.error('[saveToSupabase] Error:', err);
+    alert('Error saving: ' + String(err));
     return false;
   }
 }
@@ -78,7 +90,6 @@ const App: React.FC = () => {
   const [cosignerData, setCosignerData] = useState<CoSignerData | undefined>();
   const [earnestDepositData, setEarnestDepositData] = useState<EarnestDepositData | null>(null);
   const [documents, setDocuments] = useState<DocumentFile[]>([]);
-  const [appointmentOnlyData, setAppointmentOnlyData] = useState<AppointmentOnlyData | undefined>();
   const [draftApplicationId, setDraftApplicationId] = useState<string | null>(() => {
     try {
       return sessionStorage.getItem(DRAFT_ID_KEY);
@@ -100,10 +111,8 @@ const App: React.FC = () => {
     const handleHashChange = () => {
       if (window.location.hash === '#admin') {
         setCurrentStep('ADMIN_DASHBOARD');
-      } else if (window.location.hash === '#appointment') {
-        setCurrentStep('APPOINTMENT_ONLY');
-      } else if (currentStep === 'ADMIN_DASHBOARD' || currentStep === 'APPOINTMENT_ONLY') {
-        // If we were in admin or appointment and the hash is cleared, go home
+      } else if (currentStep === 'ADMIN_DASHBOARD') {
+        // If we were in admin and the hash is cleared, go home
         setCurrentStep('LANDING');
       }
     };
@@ -290,131 +299,20 @@ const App: React.FC = () => {
     }
   };
 
-  const handleAppointmentOnlySubmit = async (data: any) => {
-    const appointmentData: AppointmentOnlyData = {
-      id: `apt-${Date.now()}`,
-      name: data.name,
-      phone: data.phone,
-      email: data.email,
-      monthlyIncome: data.monthlyIncome,
-      employmentStatus: data.employmentStatus,
-      bedrooms: data.bedrooms,
-      utilities: data.utilities,
-      creditEstimate: data.creditEstimate,
-      landStatus: data.landStatus,
-      landLocation: data.landLocation,
-      repoHistory: data.repoHistory,
-      appointmentDate: data.appointmentDate,
-      notes: data.notes,
-      submittedAt: new Date().toISOString(),
-      status: 'Scheduled'
-    };
-    
-    setAppointmentOnlyData(appointmentData);
-    
-    // Calculate internal score (not shown to customer)
-    let internalScore = 50;
-    const income = parseInt(data.monthlyIncome.replace(/\D/g, '')) || 0;
-    if (income >= 5000) internalScore += 30;
-    else if (income >= 3500) internalScore += 20;
-    else if (income >= 2500) internalScore += 10;
-    
-    switch (data.employmentStatus) {
-      case 'employed': internalScore += 20; break;
-      case 'self_employed': internalScore += 15; break;
-      case 'part_time': internalScore += 10; break;
-      case 'retired': internalScore += 15; break;
-      default: internalScore += 5;
-    }
-    
-    if (data.repoHistory === 'none') internalScore += 10;
-    else if (data.repoHistory === '1') internalScore += 0;
-    else internalScore -= 10;
-    
-    // Credit estimate factor
-    switch (data.creditEstimate) {
-      case 'excellent': internalScore += 15; break;
-      case 'good': internalScore += 10; break;
-      case 'fair': internalScore += 5; break;
-      case 'poor': internalScore -= 5; break;
-    }
-    
-    internalScore = Math.min(Math.max(internalScore, 0), 100);
-    
-    // Save to storage
-    try {
-      const lead: LeadApplication = {
-        id: appointmentData.id,
-        status: 'Appointment Only',
-        applicant: {
-          name: data.name,
-          phone: data.phone,
-          email: data.email,
-          language: language,
-          monthlyIncome: income,
-          employmentStatus: data.employmentStatus,
-          internalScore: internalScore,
-          date: new Date().toISOString(),
-          ssn: '',
-          dob: '',
-          currentAddress: '',
-          yearsAtAddress: '',
-          employerName: '',
-          jobTitle: '',
-          employerPhone: '',
-          yearsEmployed: '',
-          wantAppointment: true,
-          appointmentDetails: data.appointmentDate,
-          landStatus: data.landStatus,
-          landLocation: data.landLocation || '',
-          utilities: data.utilities,
-          bedrooms: data.bedrooms,
-          targetPayment: 0,
-          creditEstimate: data.creditEstimate,
-          downPayment: 0,
-          downPaymentSource: '',
-          repoHistory: data.repoHistory,
-          hasCoSigner: false
-        },
-        documents: [],
-        appointmentDate: data.appointmentDate,
-        submittedAt: new Date().toISOString(),
-        isAppointmentOnly: true,
-        appointmentData: appointmentData
-      };
-      
-      await storageService.saveApplication(lead);
-      
-      // Send confirmation email
-      sendConfirmationEmail(data.email, data.name);
-      
-      // Send appointment SMS
-      sendAppointmentReminderSms(data.phone, data.name, data.appointmentDate);
-      registerAppointmentForReminders(data.phone, data.name, data.appointmentDate, appointmentData.id);
-      
-      showSavedToast(language === 'English' ? 'Appointment scheduled!' : '¡Cita programada!');
-    } catch (err) {
-      console.error('Failed to save appointment-only lead', err);
-    }
-    
-    setCurrentStep('SUCCESS');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
   const renderStep = () => {
     switch (currentStep) {
       case 'LANDING':
         return (
           <LandingPage
-            onStart={() => setCurrentStep('FINANCING_INFO')}
-            setLanguage={setLanguage}
+            onStartApplication={() => setCurrentStep('FINANCING_INFO')}
+            onLanguageChange={setLanguage}
             language={language}
           />
         );
       case 'FINANCING_INFO':
         return (
           <FinancingInfoPage
-            onStartApplication={() => setCurrentStep('APPLICATION')}
+            onContinue={() => setCurrentStep('APPLICATION')}
             onBack={() => setCurrentStep('LANDING')}
             language={language}
           />
@@ -481,14 +379,6 @@ const App: React.FC = () => {
             hasCosigner={applicantData?.hasCoSigner ?? false}
           />
         );
-      case 'APPOINTMENT_ONLY':
-        return (
-          <AppointmentOnlyForm
-            language={language}
-            onBack={() => setCurrentStep('LANDING')}
-            onSubmit={handleAppointmentOnlySubmit}
-          />
-        );
       case 'SUCCESS':
         return (
           <SuccessScreen
@@ -508,7 +398,7 @@ const App: React.FC = () => {
           />
         );
       case 'ADMIN_DASHBOARD':
-        return <Dashboard language={language} onBack={() => setCurrentStep('LANDING')} onLogout={() => setCurrentStep('LANDING')} />;
+        return <Dashboard language={language} onBack={() => setCurrentStep('LANDING')} />;
       default:
         return null;
     }
