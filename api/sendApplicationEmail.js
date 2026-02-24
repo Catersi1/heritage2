@@ -68,6 +68,10 @@ export default async function handler(req, res) {
   }
 
   try {
+    console.log('Sending email via Resend...');
+    console.log('To:', ADMIN_EMAIL);
+    console.log('API Key present:', !!RESEND_API_KEY);
+    
     // Send email via Resend
     const response = await fetch('https://api.resend.com/emails', {
       method: 'POST',
@@ -83,6 +87,8 @@ export default async function handler(req, res) {
       })
     });
 
+    console.log('Resend response status:', response.status);
+    
     if (!response.ok) {
       const error = await response.text();
       console.error('Resend error:', error);
@@ -91,6 +97,7 @@ export default async function handler(req, res) {
     }
 
     const result = await response.json();
+    console.log('Resend success:', result);
     res.status(200).json({ 
       success: true, 
       messageId: result.id 
