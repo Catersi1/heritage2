@@ -308,6 +308,9 @@ const App: React.FC = () => {
           existing.submittedAt = new Date().toISOString();
           await storageService.saveApplication(existing);
           
+          // EMAIL: Appointment scheduled
+          await sendApplicationEmail(existing, 'Appointment Only - Scheduled');
+          
           // Send appointment SMS
           if (existing.applicant?.phone && existing.applicant?.firstName) {
             sendAppointmentReminderSms(
