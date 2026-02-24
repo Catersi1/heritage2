@@ -1,8 +1,9 @@
 /**
  * Upserts one application (encrypted payload) into Supabase.
- * POST body: { id, encrypted, submitted_at }
- * Vercel env: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
+ * Uses Node https module instead of fetch
  */
+import https from 'https';
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Method not allowed' });
@@ -30,30 +31,46 @@ export default async function handler(req, res) {
     return;
   }
 
-  try {
-    const r = await fetch(`${url.replace(/\/$/, '')}/rest/v1/applications?on_conflict=id`, {
-      method: 'POST',
-      headers: {
-        apikey: key,
-        Authorization: `Bearer ${key}`,
-        'Content-Type': 'application/json',
-        Prefer: 'resolution=merge-duplicates'
-      },
-      body: JSON.stringify({
-        id: String(id),
-        encrypted: String(encrypted),
-        submitted_at: new Date(submitted_at).toISOString()
-      })
-    });
-    if (!r.ok) {
-      const t = await r.text();
-      console.error('Supabase saveApplication', r.status, t);
-      res.status(502).json({ error: 'Failed to save application' });
-      return;
+  const postData = JSON.stringify({
+    id: String(id),
+    encrypted: String(encrypted),
+    submitted_at: new Date(submitted_at).toISOString()
+  });
+
+  const hostname = url.replace('https://', '').replace(/\/$/, '');
+  
+  const options = {
+    hostname: hostname,
+    port: 443,
+    path: '/rest/v1/applications?on_conflict=id',
+    method: 'POST',
+    headers: {
+      'apikey': key,
+      'Authorization': `Bearer ${key}`,
+      'Content-Type': 'application/json',
+      'Prefer': 'resolution=merge-duplicates',
+      'Content-Length': Buffer.byteLength(postData)
     }
-    res.status(200).json({ ok: true });
-  } catch (err) {
-    console.error('saveApplication', err);
-    res.status(500).json({ error: 'Server error' });
-  }
+  };
+
+  const request = https.request(options, (response) => {
+    let data = '';
+    response.on('data', (chunk) => data += chunk);
+    response.on('end', () => {
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        res.status(200).json({ ok: true });
+      } else {
+        console.error('Supabase saveApplication', response.statusCode, data);
+        res.status(502).json({ error: 'Failed to save application', details: data });
+      }
+    });
+  });
+
+  request.on('error', (err) => {
+    console.error('saveApplication request error', err);
+    res.status(500).json({ error: 'Request failed', message: err.message });
+  });
+
+  request.write(postData);
+  request.end();
 }
