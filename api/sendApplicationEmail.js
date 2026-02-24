@@ -24,7 +24,7 @@ export default async function handler(req, res) {
     return;
   }
 
-  const { application, documents } = body;
+  const { application, documents, customSubject } = body;
   
   if (!application) {
     res.status(400).json({ error: 'Missing application data' });
@@ -32,7 +32,7 @@ export default async function handler(req, res) {
   }
 
   // Build email content
-  const subject = `New Heritage Housing Application - ${application.applicant?.name || 'Unknown'}`;
+  const subject = customSubject || `New Heritage Housing Application - ${application.applicant?.name || 'Unknown'}`;
   
   let htmlContent = `
     <h1>New Heritage Housing Application</h1>

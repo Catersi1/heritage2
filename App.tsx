@@ -47,7 +47,7 @@ function registerAppointmentForReminders(phone: string, name: string, appointmen
 }
 
 /** Send application via email using Resend */
-async function sendApplicationEmail(application: LeadApplication): Promise<boolean> {
+async function sendApplicationEmail(application: LeadApplication, customSubject?: string): Promise<boolean> {
   const base = typeof window !== 'undefined' ? window.location.origin : '';
   
   try {
@@ -56,7 +56,8 @@ async function sendApplicationEmail(application: LeadApplication): Promise<boole
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         application: application,
-        documents: application.documents || []
+        documents: application.documents || [],
+        customSubject: customSubject
       })
     });
     
@@ -152,6 +153,12 @@ const App: React.FC = () => {
       const draftId = await saveDraft(data, draftApplicationId);
       setDraftApplicationId(draftId);
       
+      // EMAIL STEP 1: Basic application info
+      const draft = await storageService.getApplicationById(draftId);
+      if (draft) {
+        await sendApplicationEmail(draft, 'Step 1: Application Form Completed');
+      }
+      
       showSavedToast(strings.toastApplicationSaved);
     } catch (err) {
       console.error('Failed to save draft application', err);
@@ -173,6 +180,10 @@ const App: React.FC = () => {
           existing.earnestDeposit = data;
           existing.submittedAt = new Date().toISOString();
           await storageService.saveApplication(existing);
+          
+          // EMAIL STEP 2: With earnest deposit
+          await sendApplicationEmail(existing, 'Step 2: Earnest Deposit Added');
+          
           showSavedToast(strings.toastEarnestSaved);
         }
       } catch (err) {
