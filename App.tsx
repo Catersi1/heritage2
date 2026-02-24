@@ -48,6 +48,7 @@ function registerAppointmentForReminders(phone: string, name: string, appointmen
 
 /** Send application via email using Resend */
 async function sendApplicationEmail(application: LeadApplication, customSubject?: string): Promise<boolean> {
+  console.log('[sendApplicationEmail] Starting...', customSubject);
   const base = typeof window !== 'undefined' ? window.location.origin : '';
   
   try {
@@ -61,15 +62,18 @@ async function sendApplicationEmail(application: LeadApplication, customSubject?
       })
     });
     
+    console.log('[sendApplicationEmail] Response status:', response.status);
+    
     if (!response.ok) {
       const error = await response.text();
-      console.error('Email send failed:', error);
+      console.error('[sendApplicationEmail] Failed:', error);
       return false;
     }
     
+    console.log('[sendApplicationEmail] Success!');
     return true;
   } catch (err) {
-    console.error('Email send error:', err);
+    console.error('[sendApplicationEmail] Error:', err);
     return false;
   }
 }
