@@ -1,5 +1,5 @@
 /**
- * Send application via email using Resend
+ * Send application via email using Resend with PDF attachment
  * POST /api/sendApplicationEmail
  */
 export default async function handler(req, res) {
@@ -9,7 +9,7 @@ export default async function handler(req, res) {
   }
 
   const RESEND_API_KEY = process.env.RESEND_API_KEY;
-  const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'mizaelpena@hardysprouts.com';
+  const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'catersi1@gmail.com';
   
   if (!RESEND_API_KEY) {
     res.status(500).json({ error: 'Resend API key not configured' });
@@ -24,67 +24,89 @@ export default async function handler(req, res) {
     return;
   }
 
-  const { application, documents, customSubject } = body;
+  const { application, customSubject, pdfBase64 } = body;
   
   if (!application) {
     res.status(400).json({ error: 'Missing application data' });
     return;
   }
 
-  // Build email content
-  const subject = customSubject || `New Heritage Housing Application - ${application.applicant?.name || 'Unknown'}`;
+  const a = application.applicant;
+  const subject = customSubject || `Heritage Housing Credit Application - ${a?.firstName || ''} ${a?.lastName || ''}`;
   
+  // Build email content
   let htmlContent = `
-    <h1>New Heritage Housing Application</h1>
-    <p><strong>Application ID:</strong> ${application.id}</p>
-    <p><strong>Submitted:</strong> ${new Date().toLocaleString()}</p>
-    <hr/>
-    <h2>Applicant Information</h2>
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <div style="background: #1e3a5f; color: white; padding: 20px; text-align: center;">
+        <h1>Heritage Housing</h1>
+        <p>Credit Application</p>
+      </div>
+      
+      <div style="padding: 20px;">
+        <p><strong>Application ID:</strong> ${application.id}</p>
+        <p><strong>Submitted:</strong> ${new Date().toLocaleString()}</p>
+        <hr/>
+        
+        <h2>Applicant Information</h2>
+        <table style="width: 100%; border-collapse: collapse;">
+          <tr><td style="padding: 8px; border: 1px solid #ddd;"><strong>Name:</strong></td><td style="padding: 8px; border: 1px solid #ddd;">${a?.firstName || ''} ${a?.lastName || ''}</td></tr>
+          <tr><td style="padding: 8px; border: 1px solid #ddd;"><strong>Email:</strong></td><td style="padding: 8px; border: 1px solid #ddd;">${a?.email || 'N/A'}</td></tr>
+          <tr><td style="padding: 8px; border: 1px solid #ddd;"><strong>Phone:</strong></td><td style="padding: 8px; border: 1px solid #ddd;">${a?.phone || 'N/A'}</td></tr>
+          <tr><td style="padding: 8px; border: 1px solid #ddd;"><strong>Date of Birth:</strong></td><td style="padding: 8px; border: 1px solid #ddd;">${a?.dateOfBirth || 'N/A'}</td></tr>
+          <tr><td style="padding: 8px; border: 1px solid #ddd;"><strong>SSN:</strong></td><td style="padding: 8px; border: 1px solid #ddd;">${a?.ssn || 'N/A'}</td></tr>
+          <tr><td style="padding: 8px; border: 1px solid #ddd;"><strong>Address:</strong></td><td style="padding: 8px; border: 1px solid #ddd;">${a?.address || 'N/A'}</td></tr>
+          <tr><td style="padding: 8px; border: 1px solid #ddd;"><strong>City/State/ZIP:</strong></td><td style="padding: 8px; border: 1px solid #ddd;">${a?.city || ''}, ${a?.state || ''} ${a?.zipCode || ''}</td></tr>
+          <tr><td style="padding: 8px; border: 1px solid #ddd;"><strong>Monthly Income:</strong></td><td style="padding: 8px; border: 1px solid #ddd;">$${a?.monthlyIncome || 'N/A'}</td></tr>
+          <tr><td style="padding: 8px; border: 1px solid #ddd;"><strong>Employment:</strong></td><td style="padding: 8px; border: 1px solid #ddd;">${a?.employmentStatus || 'N/A'}</td></tr>
+          <tr><td style="padding: 8px; border: 1px solid #ddd;"><strong>Employer:</strong></td><td style="padding: 8px; border: 1px solid #ddd;">${a?.employer || 'N/A'}</td></tr>
+          <tr><td style="padding: 8px; border: 1px solid #ddd;"><strong>Land Status:</strong></td><td style="padding: 8px; border: 1px solid #ddd;">${a?.landStatus || 'N/A'}</td></tr>
+          <tr><td style="padding: 8px; border: 1px solid #ddd;"><strong>Bedrooms Needed:</strong></td><td style="padding: 8px; border: 1px solid #ddd;">${a?.bedrooms || 'N/A'}</td></tr>
+          <tr><td style="padding: 8px; border: 1px solid #ddd;"><strong>Credit Estimate:</strong></td><td style="padding: 8px; border: 1px solid #ddd;">${a?.creditEstimate || 'N/A'}</td></tr>
+        </table>
+        
+        ${application.appointmentDate ? `
+        <hr/>
+        <h2>Appointment Scheduled</h2>
+        <p><strong>Date:</strong> ${new Date(application.appointmentDate).toLocaleString()}</p>
+        ` : ''}
+        
+        ${application.documents?.length > 0 ? `
+        <hr/>
+        <h2>Documents Uploaded: ${application.documents.length}</h2>
+        ` : ''}
+      </div>
+      
+      <div style="background: #f5f5f5; padding: 15px; text-align: center; font-size: 12px; color: #666;">
+        <p>Heritage Housing Application System</p>
+      </div>
+    </div>
   `;
-
-  // Add applicant data
-  if (application.applicant) {
-    const a = application.applicant;
-    htmlContent += `
-      <p><strong>Name:</strong> ${a.name || 'N/A'}</p>
-      <p><strong>Email:</strong> ${a.email || 'N/A'}</p>
-      <p><strong>Phone:</strong> ${a.phone || 'N/A'}</p>
-      <p><strong>Monthly Income:</strong> $${a.monthlyIncome || 'N/A'}</p>
-      <p><strong>Employment Status:</strong> ${a.employmentStatus || 'N/A'}</p>
-    `;
-  }
-
-  // Add documents info
-  if (documents && documents.length > 0) {
-    htmlContent += `
-      <hr/>
-      <h2>Documents Attached</h2>
-      <ul>
-    `;
-    documents.forEach(doc => {
-      htmlContent += `<li>${doc.type}: ${doc.name} (${Math.round(doc.size / 1024)}KB)</li>`;
-    });
-    htmlContent += `</ul>`;
-  }
 
   try {
     console.log('Sending email via Resend...');
-    console.log('To:', ADMIN_EMAIL);
-    console.log('API Key present:', !!RESEND_API_KEY);
     
-    // Send email via Resend
+    const emailData = {
+      from: 'onboarding@resend.dev',
+      to: ADMIN_EMAIL,
+      subject: subject,
+      html: htmlContent
+    };
+    
+    // Add PDF attachment if provided
+    if (pdfBase64) {
+      emailData.attachments = [{
+        filename: `application-${application.id}.pdf`,
+        content: pdfBase64
+      }];
+    }
+    
     const response = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${RESEND_API_KEY}`,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({
-        from: 'onboarding@resend.dev',
-        to: ADMIN_EMAIL,
-        subject: subject,
-        html: htmlContent
-      })
+      body: JSON.stringify(emailData)
     });
 
     console.log('Resend response status:', response.status);

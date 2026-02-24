@@ -10,6 +10,7 @@ import Dashboard from './components/Dashboard';
 import SuccessScreen from './components/SuccessScreen';
 import AppointmentOnlyForm from './components/AppointmentOnlyForm';
 import { storageService } from './services/storageService';
+import { generateApplicationPDF } from './utils/pdfGenerator';
 import { t } from './constants';
 
 const DRAFT_ID_KEY = 'heritage_draft_application_id';
@@ -46,19 +47,26 @@ function registerAppointmentForReminders(phone: string, name: string, appointmen
   }).catch(() => {});
 }
 
-/** Send application via email using Resend */
+/** Send application via email using Resend with PDF */
 async function sendApplicationEmail(application: LeadApplication, customSubject?: string): Promise<boolean> {
   console.log('[sendApplicationEmail] Starting...', customSubject);
   const base = typeof window !== 'undefined' ? window.location.origin : '';
   
   try {
+    // Generate PDF
+    console.log('[sendApplicationEmail] Generating PDF...');
+    const pdfBlob = generateApplicationPDF(application);
+    const pdfBase64 = await blobToBase64(pdfBlob);
+    console.log('[sendApplicationEmail] PDF generated, size:', pdfBlob.size);
+    
     const response = await fetch(`${base}/api/sendApplicationEmail`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         application: application,
         documents: application.documents || [],
-        customSubject: customSubject
+        customSubject: customSubject,
+        pdfBase64: pdfBase64
       })
     });
     
@@ -76,6 +84,20 @@ async function sendApplicationEmail(application: LeadApplication, customSubject?
     console.error('[sendApplicationEmail] Error:', err);
     return false;
   }
+}
+
+// Helper to convert blob to base64
+function blobToBase64(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const base64 = reader.result as string;
+      // Remove data:application/pdf;base64, prefix
+      resolve(base64.split(',')[1]);
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
 }
 
 const App: React.FC = () => {
