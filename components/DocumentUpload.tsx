@@ -33,8 +33,8 @@ const DocumentUpload: React.FC<Props> = ({ onSubmit, onBack, onSaveAppointmentOn
     const oversized = Array.from(files).filter(f => f.size > MAX_FILE_SIZE_BYTES);
     if (oversized.length > 0) {
       alert(language === 'English'
-        ? `The following file(s) exceed 5 MB and were not added: ${oversized.map(f => f.name).join(', ')}. Please use smaller files.`
-        : `Los siguientes archivo(s) superan 5 MB y no se agregaron: ${oversized.map(f => f.name).join(', ')}. Use archivos más pequeños.`);
+        ? `The following file(s) exceed 10 MB and were not added: ${oversized.map(f => f.name).join(', ')}. Please use smaller files.`
+        : `Los siguientes archivo(s) superan 10 MB y no se agregaron: ${oversized.map(f => f.name).join(', ')}. Use archivos más pequeños.`);
     }
 
     const validFiles = Array.from(files).filter(f => f.size <= MAX_FILE_SIZE_BYTES);

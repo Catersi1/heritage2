@@ -152,17 +152,12 @@ const App: React.FC = () => {
       const draftId = await saveDraft(data, draftApplicationId);
       setDraftApplicationId(draftId);
       
-      // ALSO SAVE TO SUPABASE (cloud database)
-      if (draftId) {
-        await saveToSupabase(draftId, data);
-      }
-      
       showSavedToast(strings.toastApplicationSaved);
     } catch (err) {
       console.error('Failed to save draft application', err);
       const msg = language === 'English'
-        ? 'Your application could not be saved (storage may be full or disabled). Please try again or use a different browser.'
-        : 'No se pudo guardar su solicitud. Intente de nuevo o use otro navegador.';
+        ? 'Your progress could not be saved. You can continue, but if you refresh the page your application may be lost. Try submitting the full form instead of Next step, or use a different browser.'
+        : 'No se pudo guardar su progreso. Puede continuar, pero si actualiza la página, su solicitud puede perderse. Intente enviar el formulario completo en lugar de Siguiente paso, o use un navegador diferente.';
       alert(msg);
     }
     setCurrentStep('EARNEST_DEPOSIT');
