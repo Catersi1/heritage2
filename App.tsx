@@ -46,40 +46,29 @@ function registerAppointmentForReminders(phone: string, name: string, appointmen
   }).catch(() => {});
 }
 
-/** Save application to Supabase cloud database */
-async function saveToSupabase(id: string, data: ApplicationData): Promise<boolean> {
+/** Send application via email using Resend */
+async function sendApplicationEmail(application: LeadApplication): Promise<boolean> {
   const base = typeof window !== 'undefined' ? window.location.origin : '';
-  console.log('[saveToSupabase] Starting save for ID:', id);
-  console.log('[saveToSupabase] Base URL:', base);
   
   try {
-    const payload = {
-      id: id,
-      encrypted: JSON.stringify(data),
-      submitted_at: new Date().toISOString()
-    };
-    console.log('[saveToSupabase] Payload:', payload);
-    
-    const response = await fetch(`${base}/api/saveApplication`, {
+    const response = await fetch(`${base}/api/sendApplicationEmail`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
+      body: JSON.stringify({
+        application: application,
+        documents: application.documents || []
+      })
     });
     
-    console.log('[saveToSupabase] Response status:', response.status);
-    
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error('[saveToSupabase] Failed:', response.status, errorText);
-      alert('Failed to save to cloud: ' + errorText);
+      const error = await response.text();
+      console.error('Email send failed:', error);
       return false;
     }
     
-    console.log('[saveToSupabase] Success!');
     return true;
   } catch (err) {
-    console.error('[saveToSupabase] Error:', err);
-    alert('Error saving: ' + String(err));
+    console.error('Email send error:', err);
     return false;
   }
 }
@@ -241,6 +230,14 @@ const App: React.FC = () => {
             existing.appointmentDate = appointmentDate;
           }
           await storageService.saveApplication(existing);
+          
+          // SEND EMAIL WITH APPLICATION
+          const emailSent = await sendApplicationEmail(existing);
+          if (emailSent) {
+            showSavedToast('Application submitted and emailed successfully!');
+          } else {
+            showSavedToast('Application saved but email failed. Please contact us.');
+          }
           
           // Send confirmation email
           if (existing.applicant?.email && existing.applicant?.firstName) {
