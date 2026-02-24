@@ -8,6 +8,7 @@ import CoSignerForm from './components/CoSignerForm';
 import DocumentUpload from './components/DocumentUpload';
 import Dashboard from './components/Dashboard';
 import SuccessScreen from './components/SuccessScreen';
+import AppointmentOnlyForm from './components/AppointmentOnlyForm';
 import { storageService } from './services/storageService';
 import { t } from './constants';
 
@@ -111,8 +112,10 @@ const App: React.FC = () => {
     const handleHashChange = () => {
       if (window.location.hash === '#admin') {
         setCurrentStep('ADMIN_DASHBOARD');
-      } else if (currentStep === 'ADMIN_DASHBOARD') {
-        // If we were in admin and the hash is cleared, go home
+      } else if (window.location.hash === '#appointment') {
+        setCurrentStep('APPOINTMENT_ONLY');
+      } else if (currentStep === 'ADMIN_DASHBOARD' || currentStep === 'APPOINTMENT_ONLY') {
+        // If we were in admin/appointment and the hash is cleared, go home
         setCurrentStep('LANDING');
       }
     };
@@ -312,7 +315,7 @@ const App: React.FC = () => {
       case 'FINANCING_INFO':
         return (
           <FinancingInfoPage
-            onContinue={() => setCurrentStep('APPLICATION')}
+            onStartApplication={() => setCurrentStep('APPLICATION')}
             onBack={() => setCurrentStep('LANDING')}
             language={language}
           />
@@ -399,6 +402,17 @@ const App: React.FC = () => {
         );
       case 'ADMIN_DASHBOARD':
         return <Dashboard language={language} onBack={() => setCurrentStep('LANDING')} />;
+      case 'APPOINTMENT_ONLY':
+        return (
+          <AppointmentOnlyForm
+            language={language}
+            onBack={() => setCurrentStep('LANDING')}
+            onSubmit={async (data) => {
+              console.log('Appointment scheduled:', data);
+              setCurrentStep('LANDING');
+            }}
+          />
+        );
       default:
         return null;
     }
