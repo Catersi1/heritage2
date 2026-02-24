@@ -275,21 +275,6 @@ const App: React.FC = () => {
           if (existing.applicant?.email && existing.applicant?.firstName) {
             sendConfirmationEmail(existing.applicant.email, existing.applicant.firstName);
           }
-          
-          // Send appointment SMS if date is set
-          if (appointmentDate && existing.applicant?.phone && existing.applicant?.firstName) {
-            sendAppointmentReminderSms(
-              existing.applicant.phone,
-              existing.applicant.firstName,
-              appointmentDate
-            );
-            registerAppointmentForReminders(
-              existing.applicant.phone,
-              existing.applicant.firstName,
-              appointmentDate,
-              draftApplicationId
-            );
-          }
         }
       } catch (err) {
         console.error('Failed to finalize application', err);
@@ -310,21 +295,6 @@ const App: React.FC = () => {
           
           // EMAIL: Appointment scheduled
           await sendApplicationEmail(existing, 'Appointment Only - Scheduled');
-          
-          // Send appointment SMS
-          if (existing.applicant?.phone && existing.applicant?.firstName) {
-            sendAppointmentReminderSms(
-              existing.applicant.phone,
-              existing.applicant.firstName,
-              date
-            );
-            registerAppointmentForReminders(
-              existing.applicant.phone,
-              existing.applicant.firstName,
-              date,
-              draftApplicationId
-            );
-          }
           
           showSavedToast(strings.toastFormSaved);
         }
