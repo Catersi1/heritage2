@@ -324,12 +324,6 @@ const App: React.FC = () => {
               try {
                 const draftId = await saveDraft(applicant, draftApplicationId);
                 setDraftApplicationId(draftId);
-                
-                // ALSO SAVE TO SUPABASE
-                if (draftId) {
-                  await saveToSupabase(draftId, applicant);
-                }
-                
                 showSavedToast(strings.toastFormSaved);
               } catch (err) {
                 console.error('Failed to save draft on next step', err);
