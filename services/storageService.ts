@@ -122,10 +122,12 @@ export const storageService = {
     }
   },
 
-  saveApplication: async (app: LeadApplication): Promise<void> => {
+  saveApplication: async (app: LeadApplication): Promise<{ savedToCloud: boolean; cloudError?: string }> => {
     console.log(`Saving application ${app.id}...`);
     const appToSave = { ...app };
-    
+    let savedToCloud = false;
+    let cloudError: string | undefined;
+
     // 1. Try to save to Supabase first if enabled
     if (supabase) {
       try {
@@ -160,10 +162,12 @@ export const storageService = {
         if (error) throw error;
         console.log("Application saved to Supabase successfully");
         syncStats.lastSync = new Date();
+        savedToCloud = true;
         
         // Update appToSave for local storage stubbing
         Object.assign(appToSave, finalApp);
-      } catch (e) {
+      } catch (e: any) {
+        cloudError = e?.message || e?.error_description || String(e);
         console.error("Failed to save to Supabase:", e);
         // If Supabase fails, we still try local storage as fallback
       }
@@ -219,6 +223,7 @@ export const storageService = {
         throw new Error("STORAGE_FULL");
       }
     }
+    return { savedToCloud, cloudError };
   },
 
   getApplications: (): LeadApplication[] => {
@@ -284,9 +289,11 @@ export const storageService = {
       }
 
       return merged;
-    } catch (e) {
+    } catch (e: any) {
       console.error("Supabase fetch error, falling back to local:", e);
-      return localApps;
+      // Rethrow so the dashboard can show the actual error (e.g. table missing, RLS)
+      const msg = e?.message || e?.error_description || String(e);
+      throw new Error(msg);
     }
   },
 

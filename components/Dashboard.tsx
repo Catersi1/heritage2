@@ -35,14 +35,12 @@ const Dashboard: React.FC<Props> = ({ onLogout, onExit, showToast }) => {
       if (storageService.isCloudEnabled() && data.length === 0) {
         console.log("Cloud connected but no data found.");
       }
-      if (showToast && !syncError) {
-        // Only show success toast if manually triggered or first load? 
-        // Maybe too much for auto-refresh. Let's only show if manual.
-      }
     } catch (e: any) {
-      const msg = e.message || "Failed to sync with cloud";
+      const msg = e?.message || "Failed to sync with cloud";
       setSyncError(msg);
       if (showToast) showToast(msg, 'error');
+      // Still show local data so the dashboard isn't empty
+      setApps(storageService.getApplications());
     } finally {
       setIsLoading(false);
     }
@@ -562,6 +560,30 @@ const Dashboard: React.FC<Props> = ({ onLogout, onExit, showToast }) => {
                   </form>
                 )}
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {!storageService.isCloudEnabled() && (
+        <div className="bg-amber-50 border-2 border-amber-400 p-5 rounded-2xl print:hidden mb-4">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 rounded-xl bg-amber-200 flex items-center justify-center text-amber-700 shrink-0">
+              <i className="fa-solid fa-triangle-exclamation text-lg"></i>
+            </div>
+            <div>
+              <h3 className="font-bold text-amber-900">Applications from customers are not visible here</h3>
+              <p className="text-sm text-amber-800 mt-1">
+                Right now the app is running in <strong>local-only</strong> mode. When someone fills out an application online, 
+                it is saved only in <strong>their browser</strong>, not in a shared database. So you will only see applications 
+                that were submitted from this same device/browser.
+              </p>
+              <p className="text-sm text-amber-800 mt-2">
+                To see all submissions from your live site (e.g. heritage2.vercel.app), set up <strong>Supabase</strong> and add 
+                <code className="mx-1 px-1.5 py-0.5 bg-amber-200 rounded text-xs">VITE_SUPABASE_URL</code> and 
+                <code className="mx-1 px-1.5 py-0.5 bg-amber-200 rounded text-xs">VITE_SUPABASE_ANON_KEY</code> in your 
+                deployment (Vercel, etc.). See the project <code className="px-1.5 py-0.5 bg-amber-200 rounded text-xs">.env.example</code> and README.
+              </p>
             </div>
           </div>
         </div>

@@ -95,9 +95,12 @@ const LayawaySignupPage: React.FC<Props> = ({ language, onBack, onStartCreditApp
       layawayData,
     };
     try {
-      await storageService.saveApplication(lead);
+      const { savedToCloud, cloudError } = await storageService.saveApplication(lead);
       setLayawayForm((prev) => ({ ...prev, submittedAt }));
       setLayawaySubmitted(true);
+      if (!savedToCloud && cloudError && storageService.isCloudEnabled()) {
+        alert(language === 'English' ? 'Saved locally but could not sync to cloud. You may not see this in the dashboard. Error: ' + cloudError : 'Guardado localmente pero no se pudo sincronizar. Error: ' + cloudError);
+      }
     } catch (err) {
       console.error(err);
       alert(language === 'English' ? 'Failed to submit. Please try again.' : 'Error al enviar. Intente de nuevo.');

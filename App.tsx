@@ -221,8 +221,11 @@ const App: React.FC = () => {
         isComplete: true
       };
 
-      await storageService.saveApplication(newApp);
+      const { savedToCloud, cloudError } = await storageService.saveApplication(newApp);
       showToast(language === 'English' ? 'Final application submitted successfully' : 'Solicitud final enviada con éxito');
+      if (!savedToCloud && cloudError && storageService.isCloudEnabled()) {
+        showToast(language === 'English' ? 'Saved locally but could not sync to cloud. Error: ' + cloudError : 'Guardado localmente pero no se pudo sincronizar. Error: ' + cloudError, 'error');
+      }
       setCurrentStep('SUCCESS');
       
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -274,9 +277,11 @@ const App: React.FC = () => {
       isComplete: true
     };
 
-    await storageService.saveApplication(newApp);
+    const { savedToCloud, cloudError } = await storageService.saveApplication(newApp);
     showToast(language === 'English' ? 'Appointment request saved and uploaded' : 'Solicitud de cita guardada y cargada');
-    
+    if (!savedToCloud && cloudError && storageService.isCloudEnabled()) {
+      showToast(language === 'English' ? 'Saved locally but could not sync to cloud. Error: ' + cloudError : 'Guardado localmente pero no se pudo sincronizar. Error: ' + cloudError, 'error');
+    }
     setCurrentStep('SUCCESS');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
