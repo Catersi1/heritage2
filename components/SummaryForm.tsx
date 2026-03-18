@@ -1,7 +1,9 @@
 
-import React from 'react';
+import React, { useRef, useState } from 'react';
 import { ApplicationData, CoSignerData, CustomizationData, Language } from '../types';
 import { t } from '../constants';
+import { jsPDF } from 'jspdf';
+import html2canvas from 'html2canvas';
 
 interface Props {
   applicant: ApplicationData;
@@ -15,9 +17,41 @@ interface Props {
 const SummaryForm: React.FC<Props> = ({ applicant, cosigner, customization, language, onConfirm, onBack }) => {
   const strings = t(language);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+  const summaryRef = useRef<HTMLDivElement>(null);
 
   const handlePrint = () => {
     window.print();
+  };
+
+  const handleDownloadPDF = async () => {
+    if (!summaryRef.current) return;
+    
+    setIsGeneratingPDF(true);
+    try {
+      const canvas = await html2canvas(summaryRef.current, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#ffffff',
+        windowWidth: 1200
+      });
+      
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'px',
+        format: [canvas.width, canvas.height]
+      });
+      
+      pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+      pdf.save(`Heritage_Housing_Application_${applicant?.name || 'Summary'}.pdf`);
+    } catch (err) {
+      console.error('PDF generation error:', err);
+      alert(language === 'English' ? 'Failed to generate PDF. Please use the Print button instead.' : 'Error al generar PDF. Por favor use el botón de Imprimir.');
+    } finally {
+      setIsGeneratingPDF(false);
+    }
   };
 
   const handleConfirm = async () => {
@@ -44,19 +78,29 @@ const SummaryForm: React.FC<Props> = ({ applicant, cosigner, customization, lang
 
   return (
     <div className="max-w-4xl mx-auto space-y-8 animate-fade-in pb-20">
-      <div className="bg-white rounded-[2.5rem] shadow-2xl border border-slate-100 overflow-hidden print:shadow-none print:border-none">
+      <div ref={summaryRef} className="bg-white rounded-[2.5rem] shadow-2xl border border-slate-100 overflow-hidden print:shadow-none print:border-none">
         {/* Header */}
         <div className="p-8 border-b border-slate-100 bg-slate-900 text-white flex justify-between items-center print:bg-white print:text-black print:border-b-4 print:border-black">
           <div>
             <h2 className="text-2xl font-black uppercase tracking-tight">Application Summary</h2>
             <p className="text-slate-400 text-xs font-bold uppercase tracking-widest print:text-slate-600">Heritage Housing Official Record</p>
           </div>
-          <button 
-            onClick={handlePrint}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-2xl font-black text-sm transition-all flex items-center gap-2 shadow-lg shadow-blue-900/20 print:hidden"
-          >
-            <i className="fa-solid fa-print"></i> PRINT SUMMARY
-          </button>
+          <div className="flex gap-3 print:hidden">
+            <button 
+              onClick={handleDownloadPDF}
+              disabled={isGeneratingPDF}
+              className="bg-white/10 hover:bg-white/20 text-white px-6 py-3 rounded-2xl font-black text-sm transition-all flex items-center gap-2 border border-white/10 disabled:opacity-50"
+            >
+              <i className={`fa-solid ${isGeneratingPDF ? 'fa-spinner fa-spin' : 'fa-file-pdf'} text-red-400`}></i> 
+              {isGeneratingPDF ? '...' : 'PDF'}
+            </button>
+            <button 
+              onClick={handlePrint}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-2xl font-black text-sm transition-all flex items-center gap-2 shadow-lg shadow-blue-900/20"
+            >
+              <i className="fa-solid fa-print"></i> PRINT
+            </button>
+          </div>
         </div>
 
         <div className="p-4 md:p-8 space-y-6 md:space-y-10">
@@ -92,7 +136,10 @@ const SummaryForm: React.FC<Props> = ({ applicant, cosigner, customization, lang
                 </div>
                 <div className="sm:col-span-2">
                   <p className="text-[9px] font-bold text-slate-400 uppercase">Current Address</p>
-                  <p className="font-bold text-slate-700 text-sm">{applicant?.currentAddress || 'No address provided'}</p>
+                  <p className="font-bold text-slate-700 text-sm">
+                    {applicant?.currentAddress || 'No address provided'}
+                    {applicant?.city && applicant?.state ? `, ${applicant.city}, ${applicant.state}` : ''}
+                  </p>
                 </div>
               </div>
             </div>

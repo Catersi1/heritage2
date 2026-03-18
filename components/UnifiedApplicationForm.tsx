@@ -26,6 +26,8 @@ const UnifiedApplicationForm: React.FC<Props> = ({ onSubmit, onBack, initialData
     ssn: '',
     dob: '',
     currentAddress: '',
+    city: '',
+    state: '',
     yearsAtAddress: '',
     landStatus: language === 'English' ? 'I need to find land' : 'Necesito encontrar terreno',
     landLocation: '',
@@ -171,13 +173,23 @@ const UnifiedApplicationForm: React.FC<Props> = ({ onSubmit, onBack, initialData
             <span className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm font-bold">2</span>
             <h3 className="text-lg font-bold text-slate-800">{strings.residenceTitle}</h3>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-6 gap-6">
             <div className="md:col-span-3">
               <InputLabel text={strings.streetAddress} />
               <input type="text" required placeholder={language === 'English' ? "123 Main St, Apt 4" : "123 Calle Principal, Apt 4"} className="w-full px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" 
                 value={formData.currentAddress} onChange={e => setFormData({...formData, currentAddress: e.target.value})} />
             </div>
-            <div>
+            <div className="md:col-span-1">
+              <InputLabel text={strings.city} />
+              <input type="text" required placeholder={language === 'English' ? "City" : "Ciudad"} className="w-full px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" 
+                value={formData.city} onChange={e => setFormData({...formData, city: e.target.value})} />
+            </div>
+            <div className="md:col-span-1">
+              <InputLabel text={strings.state} />
+              <input type="text" required placeholder={language === 'English' ? "State" : "Estado"} className="w-full px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" 
+                value={formData.state} onChange={e => setFormData({...formData, state: e.target.value})} />
+            </div>
+            <div className="md:col-span-1">
               <InputLabel text={strings.yearsThere} />
               <input type="text" required placeholder="e.g. 3" className="w-full px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" 
                 value={formData.yearsAtAddress} onChange={e => setFormData({...formData, yearsAtAddress: e.target.value})} />

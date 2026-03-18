@@ -24,6 +24,8 @@ const CoSignerForm: React.FC<Props> = ({ onSubmit, onBack, initialData, language
     ssn: '',
     dob: '',
     currentAddress: '',
+    city: '',
+    state: '',
     yearsAtAddress: '',
     employmentStatus: language === 'English' ? 'W2 (Employed)' : 'W2 (Empleado)',
     employerName: '',
@@ -96,6 +98,26 @@ const CoSignerForm: React.FC<Props> = ({ onSubmit, onBack, initialData, language
             <InputLabel text={strings.ssn} />
             <input type="password" required placeholder="XXX-XX-XXXX" className="w-full px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" 
               value={formData.ssn} onChange={e => setFormData({...formData, ssn: e.target.value})} />
+          </div>
+          <div className="md:col-span-2">
+            <InputLabel text={strings.streetAddress} />
+            <input type="text" required placeholder={language === 'English' ? "123 Main St, Apt 4" : "123 Calle Principal, Apt 4"} className="w-full px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" 
+              value={formData.currentAddress} onChange={e => setFormData({...formData, currentAddress: e.target.value})} />
+          </div>
+          <div>
+            <InputLabel text={strings.city} />
+            <input type="text" required className="w-full px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" 
+              value={formData.city} onChange={e => setFormData({...formData, city: e.target.value})} />
+          </div>
+          <div>
+            <InputLabel text={strings.state} />
+            <input type="text" required className="w-full px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" 
+              value={formData.state} onChange={e => setFormData({...formData, state: e.target.value})} />
+          </div>
+          <div>
+            <InputLabel text={strings.yearsThere} />
+            <input type="text" required placeholder="e.g. 3" className="w-full px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" 
+              value={formData.yearsAtAddress} onChange={e => setFormData({...formData, yearsAtAddress: e.target.value})} />
           </div>
         </section>
 

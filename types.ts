@@ -1,5 +1,5 @@
 
-export type AppStep = 'LANDING' | 'PROCESS' | 'APPLICATION' | 'CO_SIGNER' | 'CUSTOMIZER' | 'DOCUMENTS' | 'SUMMARY' | 'DEPOSIT_RECEIPT' | 'PAYMENT_AUTH' | 'SUCCESS' | 'ADMIN_DASHBOARD' | 'APPOINTMENT_ONLY' | 'LAYAWAY_SIGNUP';
+export type AppStep = 'LANDING' | 'PROCESS' | 'APPLICATION' | 'CO_SIGNER' | 'CUSTOMIZER' | 'DOCUMENTS' | 'SUMMARY' | 'DEPOSIT_RECEIPT' | 'PAYMENT_AUTH' | 'SUCCESS' | 'ADMIN_DASHBOARD' | 'APPOINTMENT_ONLY' | 'CREDIT_BUILDING';
 
 export type Language = 'English' | 'Español';
 
@@ -33,6 +33,8 @@ export interface BasePersonalData {
   ssn: string;
   dob: string;
   currentAddress: string;
+  city: string;
+  state: string;
   yearsAtAddress: string;
   employmentStatus: string;
   employerName: string;
@@ -98,17 +100,6 @@ export interface AppointmentOnlyData {
   submittedAt: string;
 }
 
-export interface LayawayData {
-  fullName: string;
-  email: string;
-  phone: string;
-  monthlyPaymentAfford: number | '';
-  targetDownPayment: number | '';
-  preferredContact: 'Phone' | 'Email' | 'Text';
-  notes: string;
-  submittedAt: string;
-}
-
 export interface DocumentFile {
   id: string;
   name: string;
@@ -128,7 +119,6 @@ export interface LeadApplication {
   depositReceipt?: DepositReceiptData;
   paymentAuth?: PaymentAuthData;
   submittedAt: string;
-  type: 'CREDIT_APP' | 'APPOINTMENT_ONLY' | 'LAYAWAY';
+  type: 'CREDIT_APP' | 'APPOINTMENT_ONLY';
   isComplete?: boolean;
-  layawayData?: LayawayData; // Present when type === 'LAYAWAY'
 }

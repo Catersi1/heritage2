@@ -2,18 +2,17 @@
 import React from 'react';
 import { Icons, t } from '../constants';
 import { Language } from '../types';
-import CreditBuilding from './CreditBuilding';
 
 interface Props {
   onStart: () => void;
   onCustomizer: () => void;
   onAppointment: () => void;
-  onStartLayaway: () => void;
+  onCreditBuilding: () => void;
   language: Language;
   setLanguage: (lang: Language) => void;
 }
 
-const LandingPage: React.FC<Props> = ({ onStart, onCustomizer, onAppointment, onStartLayaway, language, setLanguage }) => {
+const LandingPage: React.FC<Props> = ({ onStart, onCustomizer, onAppointment, onCreditBuilding, language, setLanguage }) => {
   const strings = t(language);
 
   const [activeTab, setActiveTab] = React.useState<'apply' | 'customize' | 'appointment' | 'credit'>('apply');
@@ -67,34 +66,34 @@ const LandingPage: React.FC<Props> = ({ onStart, onCustomizer, onAppointment, on
         </p>
         
         {/* Interactive Tabs */}
-        <div className="max-w-3xl mx-auto bg-slate-100 p-2 rounded-[2rem] flex flex-col sm:flex-row flex-wrap gap-2 shadow-inner justify-center">
+        <div className="max-w-2xl mx-auto bg-slate-100 p-2 rounded-[2rem] flex flex-col sm:flex-row gap-2 shadow-inner">
           <button 
             onClick={() => setActiveTab('apply')}
-            className={`flex-1 min-w-[120px] py-4 px-4 rounded-3xl font-black text-sm transition-all flex items-center justify-center gap-2 ${activeTab === 'apply' ? 'bg-white text-blue-600 shadow-xl' : 'text-slate-500 hover:text-slate-700'}`}
+            className={`flex-1 py-4 px-6 rounded-3xl font-black text-sm transition-all flex items-center justify-center gap-2 ${activeTab === 'apply' ? 'bg-white text-blue-600 shadow-xl' : 'text-slate-500 hover:text-slate-700'}`}
           >
             <i className="fa-solid fa-file-signature"></i>
             {language === 'English' ? 'APPLY NOW' : 'APLICAR AHORA'}
           </button>
           <button 
             onClick={() => setActiveTab('customize')}
-            className={`flex-1 min-w-[120px] py-4 px-4 rounded-3xl font-black text-sm transition-all flex items-center justify-center gap-2 ${activeTab === 'customize' ? 'bg-white text-blue-600 shadow-xl' : 'text-slate-500 hover:text-slate-700'}`}
+            className={`flex-1 py-4 px-6 rounded-3xl font-black text-sm transition-all flex items-center justify-center gap-2 ${activeTab === 'customize' ? 'bg-white text-blue-600 shadow-xl' : 'text-slate-500 hover:text-slate-700'}`}
           >
             <i className="fa-solid fa-wand-magic-sparkles"></i>
             {language === 'English' ? 'CUSTOMIZER' : 'PERSONALIZADOR'}
           </button>
           <button 
             onClick={() => setActiveTab('appointment')}
-            className={`flex-1 min-w-[120px] py-4 px-4 rounded-3xl font-black text-sm transition-all flex items-center justify-center gap-2 ${activeTab === 'appointment' ? 'bg-white text-blue-600 shadow-xl' : 'text-slate-500 hover:text-slate-700'}`}
+            className={`flex-1 py-4 px-6 rounded-3xl font-black text-sm transition-all flex items-center justify-center gap-2 ${activeTab === 'appointment' ? 'bg-white text-blue-600 shadow-xl' : 'text-slate-500 hover:text-slate-700'}`}
           >
             <i className="fa-solid fa-calendar-check"></i>
             {language === 'English' ? 'APPOINTMENT' : 'CITA'}
           </button>
           <button 
             onClick={() => setActiveTab('credit')}
-            className={`flex-1 min-w-[120px] py-4 px-4 rounded-3xl font-black text-sm transition-all flex items-center justify-center gap-2 ${activeTab === 'credit' ? 'bg-white text-blue-600 shadow-xl' : 'text-slate-500 hover:text-slate-700'}`}
+            className={`flex-1 py-4 px-6 rounded-3xl font-black text-sm transition-all flex items-center justify-center gap-2 ${activeTab === 'credit' ? 'bg-white text-blue-600 shadow-xl' : 'text-slate-500 hover:text-slate-700'}`}
           >
-            <i className="fa-solid fa-credit-card"></i>
-            {strings.creditBuildingTab}
+            <i className="fa-solid fa-chart-line"></i>
+            {language === 'English' ? 'BUILD CREDIT' : 'CONSTRUIR CRÉDITO'}
           </button>
         </div>
 
@@ -124,9 +123,12 @@ const LandingPage: React.FC<Props> = ({ onStart, onCustomizer, onAppointment, on
             </button>
           )}
           {activeTab === 'credit' && (
-            <div className="w-full max-w-4xl mx-auto pt-2">
-              <CreditBuilding language={language} onStartCreditApp={onStart} onStartLayaway={onStartLayaway} />
-            </div>
+            <button 
+              onClick={onCreditBuilding}
+              className="bg-indigo-600 hover:bg-indigo-700 text-white text-xl font-bold py-6 px-12 rounded-[2rem] shadow-2xl shadow-indigo-200 transition-all transform hover:-translate-y-1 active:scale-95 flex items-center justify-center gap-3 mx-auto animate-fade-in"
+            >
+              {language === 'English' ? 'Credit Building Resources' : 'Recursos para Construir Crédito'} <i className="fa-solid fa-graduation-cap"></i>
+            </button>
           )}
         </div>
       </section>

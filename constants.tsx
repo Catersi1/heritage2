@@ -197,6 +197,8 @@ export const t = (lang: Language) => ({
   encryptionNote: lang === 'English' ? 'AES-256 Bit Encryption Active' : 'Cifrado AES-256 bits Activo',
   residenceTitle: lang === 'English' ? 'Current Residence' : 'Residencia Actual',
   streetAddress: lang === 'English' ? 'Street Address' : 'Dirección',
+  city: lang === 'English' ? 'City' : 'Ciudad',
+  state: lang === 'English' ? 'State' : 'Estado',
   yearsThere: lang === 'English' ? 'Years There' : 'Años Ahí',
   incomeTitle: lang === 'English' ? 'Employment & Income' : 'Empleo e Ingresos',
   empType: lang === 'English' ? 'Employment Type' : 'Tipo de Empleo',
@@ -260,40 +262,4 @@ export const t = (lang: Language) => ({
   preferredAppointmentDate: lang === 'English' ? 'Preferred Appointment Date' : 'Fecha de Cita Preferida',
   additionalNotesOptional: lang === 'English' ? 'Additional Notes (Optional)' : 'Notas Adicionales (Opcional)',
   scheduleAppointment: lang === 'English' ? 'Schedule Appointment' : 'Programar Cita',
-
-  // Credit Building
-  creditBuildingTab: lang === 'English' ? 'CREDIT BUILDING' : 'CONSTRUIR CRÉDITO',
-  creditBuildingIntro: lang === 'English'
-    ? 'Building strong credit before you apply can improve your approval odds and help you qualify for better terms. The trusted partners below offer credit-builder products—such as secured credit-builder loans and credit-builder cards—that report to the major bureaus so you can establish or improve your score over time. Many of our customers use these tools to get ready for financing. Remember: buying and paying for your mobile home through Heritage Housing also helps you build credit with on-time monthly payments. When you\'re ready to apply for financing, start with our secure credit application below.'
-    : 'Construir un buen crédito antes de solicitar puede mejorar sus posibilidades de aprobación y ayudarle a obtener mejores condiciones. Los socios de confianza a continuación ofrecen productos para construir crédito—como préstamos asegurados y tarjetas que reportan a las principales agencias—para que pueda establecer o mejorar su puntaje con el tiempo. Muchos de nuestros clientes usan estas herramientas para prepararse. Recuerde: comprar y pagar su casa móvil a través de Heritage Housing también le ayuda a construir crédito con sus pagos mensuales a tiempo. Cuando esté listo para solicitar financiamiento, comience con nuestra solicitud de crédito segura a continuación.',
-  creditBuildingApplyCta: lang === 'English' ? 'Start our credit application' : 'Iniciar nuestra solicitud de crédito',
-  creditBuildingPartnersTitle: lang === 'English' ? 'Recommended credit-building partners' : 'Socios recomendados para construir crédito',
-  creditBuildingLearnMore: lang === 'English' ? 'Learn more' : 'Saber más',
-  creditBuildingSelfDesc: lang === 'English' ? 'Credit-builder loans and secured cards that report to all three bureaus. Build savings while you build credit.' : 'Préstamos y tarjetas aseguradas que reportan a las tres agencias. Ahorre mientras construye su crédito.',
-  creditBuildingCreditStrongDesc: lang === 'English' ? 'Credit Strong helps you build credit history with installment loans that report to Equifax, Experian, and TransUnion.' : 'Credit Strong le ayuda a construir historial crediticio con préstamos a plazos que reportan a Equifax, Experian y TransUnion.',
-  creditBuildingKickoffDesc: lang === 'English' ? 'Kikoff offers a low-cost credit-building account and line of credit designed to help establish or improve your score.' : 'Kikoff ofrece una cuenta y línea de crédito de bajo costo para establecer o mejorar su puntaje.',
-
-  // Layaway Program
-  layawayTitle: lang === 'English' ? 'Layaway program' : 'Programa de apartado',
-  layawayCardDesc: lang === 'English'
-    ? 'Save toward your down payment with flexible monthly payments. Sign up and we\'ll set up your plan.'
-    : 'Ahorre para su enganche con pagos mensuales flexibles. Regístrese y configuraremos su plan.',
-  layawayCardCta: lang === 'English' ? 'Sign up for layaway' : 'Registrarse para apartado',
-  layawayIntro: lang === 'English'
-    ? 'Save toward your down payment with flexible monthly payments. Sign up below and we\'ll set up your layaway plan. When you\'re ready, start our credit application to begin paying toward your down payment and lock in your path to homeownership.'
-    : 'Ahorre para su enganche con pagos mensuales flexibles. Regístrese a continuación y configuraremos su plan de apartado. Cuando esté listo, inicie nuestra solicitud de crédito para comenzar a pagar su enganche y asegurar su camino hacia la vivienda.',
-  layawayFormTitle: lang === 'English' ? 'Sign up for layaway' : 'Registrarse para apartado',
-  layawayFullName: lang === 'English' ? 'Full name' : 'Nombre completo',
-  layawayEmail: lang === 'English' ? 'Email address' : 'Correo electrónico',
-  layawayPhone: lang === 'English' ? 'Phone number' : 'Número de teléfono',
-  layawayMonthlyPayment: lang === 'English' ? 'Monthly payment I can afford ($)' : 'Pago mensual que puedo hacer ($)',
-  layawayTargetDownPayment: lang === 'English' ? 'Target down payment ($, optional)' : 'Enganche objetivo ($, opcional)',
-  layawayPreferredContact: lang === 'English' ? 'Preferred contact' : 'Contacto preferido',
-  layawayNotes: lang === 'English' ? 'Notes (optional)' : 'Notas (opcional)',
-  layawaySubmit: lang === 'English' ? 'Submit layaway sign-up' : 'Enviar registro de apartado',
-  layawaySuccessTitle: lang === 'English' ? 'You\'re signed up' : 'Registro exitoso',
-  layawaySuccessMessage: lang === 'English'
-    ? 'We\'ve received your layaway sign-up. Our team will contact you to confirm your plan. When you\'re ready to start paying toward your down payment, use the button below to begin our credit application.'
-    : 'Hemos recibido su registro de apartado. Nuestro equipo se comunicará con usted para confirmar su plan. Cuando esté listo para comenzar a pagar su enganche, use el botón a continuación para iniciar nuestra solicitud de crédito.',
-  layawayBeginCta: lang === 'English' ? 'Begin layaway & credit application' : 'Iniciar apartado y solicitud de crédito',
 });

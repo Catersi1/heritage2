@@ -35,12 +35,14 @@ const Dashboard: React.FC<Props> = ({ onLogout, onExit, showToast }) => {
       if (storageService.isCloudEnabled() && data.length === 0) {
         console.log("Cloud connected but no data found.");
       }
+      if (showToast && !syncError) {
+        // Only show success toast if manually triggered or first load? 
+        // Maybe too much for auto-refresh. Let's only show if manual.
+      }
     } catch (e: any) {
-      const msg = e?.message || "Failed to sync with cloud";
+      const msg = e.message || "Failed to sync with cloud";
       setSyncError(msg);
       if (showToast) showToast(msg, 'error');
-      // Still show local data so the dashboard isn't empty
-      setApps(storageService.getApplications());
     } finally {
       setIsLoading(false);
     }
@@ -102,16 +104,29 @@ const Dashboard: React.FC<Props> = ({ onLogout, onExit, showToast }) => {
     try {
       if (doc.data.startsWith('http')) {
         // For cloud URLs, fetch the blob to force download and preserve filename
-        const response = await fetch(doc.data);
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = doc.name;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(url);
+        // If this fails due to CORS, we fallback to direct link
+        try {
+          const response = await fetch(doc.data, { mode: 'cors' });
+          if (!response.ok) throw new Error('Network response was not ok');
+          const blob = await response.blob();
+          const url = window.URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = doc.name;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          window.URL.revokeObjectURL(url);
+        } catch (fetchErr) {
+          console.warn('Blob download failed, falling back to direct link:', fetchErr);
+          const link = document.createElement('a');
+          link.href = doc.data;
+          link.target = '_blank';
+          link.download = doc.name;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        }
       } else {
         // For base64 data
         const link = document.createElement('a');
@@ -146,13 +161,23 @@ const Dashboard: React.FC<Props> = ({ onLogout, onExit, showToast }) => {
     setIsLoading(true);
     try {
       // Temporarily hide elements we don't want in the PDF
+      // Ensure the element is visible and scrolled to top for capture
+      const originalScrollTop = window.scrollY;
+      window.scrollTo(0, 0);
+      
       const canvas = await html2canvas(profileRef.current, {
         scale: 2,
         useCORS: true,
         logging: false,
         backgroundColor: '#ffffff',
-        windowWidth: 1200 // Ensure consistent width for capture
+        windowWidth: 1200,
+        scrollX: 0,
+        scrollY: 0,
+        x: 0,
+        y: 0
       });
+      
+      window.scrollTo(0, originalScrollTop);
       
       const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF({
@@ -204,7 +229,9 @@ const Dashboard: React.FC<Props> = ({ onLogout, onExit, showToast }) => {
             email: 'john@example.com',
             ssn: '123-45-6789',
             dob: '1985-05-15',
-            currentAddress: '123 Maple St, Oklahoma City, OK',
+            currentAddress: '123 Maple St',
+            city: 'Oklahoma City',
+            state: 'OK',
             yearsAtAddress: '5',
             employmentStatus: 'W2 (Employed)',
             employerName: 'Tech Corp',
@@ -235,7 +262,9 @@ const Dashboard: React.FC<Props> = ({ onLogout, onExit, showToast }) => {
             email: 'jane@example.com',
             ssn: '987-65-4321',
             dob: '1987-08-20',
-            currentAddress: '123 Maple St, Oklahoma City, OK',
+            currentAddress: '123 Maple St',
+            city: 'Oklahoma City',
+            state: 'OK',
             yearsAtAddress: '5',
             employmentStatus: 'W2 (Employed)',
             employerName: 'Health Inc',
@@ -259,7 +288,9 @@ const Dashboard: React.FC<Props> = ({ onLogout, onExit, showToast }) => {
             email: 'robert@test.com',
             ssn: '444-55-6666',
             dob: '1990-12-01',
-            currentAddress: '456 Oak Ave, Tulsa, OK',
+            currentAddress: '456 Oak Ave',
+            city: 'Tulsa',
+            state: 'OK',
             yearsAtAddress: '2',
             employmentStatus: '1099 (Self-Employed)',
             employerName: 'Self',
@@ -308,7 +339,9 @@ const Dashboard: React.FC<Props> = ({ onLogout, onExit, showToast }) => {
             email: 'maria@example.com',
             ssn: '111-22-3333',
             dob: '1975-03-10',
-            currentAddress: '789 Pine Rd, Norman, OK',
+            currentAddress: '789 Pine Rd',
+            city: 'Norman',
+            state: 'OK',
             yearsAtAddress: '1',
             employmentStatus: 'Cash/Other',
             employerName: 'Various',
@@ -565,30 +598,6 @@ const Dashboard: React.FC<Props> = ({ onLogout, onExit, showToast }) => {
         </div>
       )}
 
-      {!storageService.isCloudEnabled() && (
-        <div className="bg-amber-50 border-2 border-amber-400 p-5 rounded-2xl print:hidden mb-4">
-          <div className="flex items-start gap-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-200 flex items-center justify-center text-amber-700 shrink-0">
-              <i className="fa-solid fa-triangle-exclamation text-lg"></i>
-            </div>
-            <div>
-              <h3 className="font-bold text-amber-900">Applications from customers are not visible here</h3>
-              <p className="text-sm text-amber-800 mt-1">
-                Right now the app is running in <strong>local-only</strong> mode. When someone fills out an application online, 
-                it is saved only in <strong>their browser</strong>, not in a shared database. So you will only see applications 
-                that were submitted from this same device/browser.
-              </p>
-              <p className="text-sm text-amber-800 mt-2">
-                To see all submissions from your live site (e.g. heritage2.vercel.app), set up <strong>Supabase</strong> and add 
-                <code className="mx-1 px-1.5 py-0.5 bg-amber-200 rounded text-xs">VITE_SUPABASE_URL</code> and 
-                <code className="mx-1 px-1.5 py-0.5 bg-amber-200 rounded text-xs">VITE_SUPABASE_ANON_KEY</code> in your 
-                deployment (Vercel, etc.). See the project <code className="px-1.5 py-0.5 bg-amber-200 rounded text-xs">.env.example</code> and README.
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-
       {storageService.isCloudEnabled() && sessionStorage.getItem('TEMP_SUPABASE_URL') && (
         <div className="bg-amber-50 border border-amber-200 p-3 rounded-xl flex items-center justify-between text-amber-800 text-xs print:hidden">
           <div className="flex items-center gap-2">
@@ -692,10 +701,9 @@ const Dashboard: React.FC<Props> = ({ onLogout, onExit, showToast }) => {
                       </td>
                       <td className="px-6 py-4">
                         <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-tighter ${
-                          app.type === 'CREDIT_APP' ? 'bg-indigo-100 text-indigo-700' :
-                          app.type === 'LAYAWAY' ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'
+                          app.type === 'CREDIT_APP' ? 'bg-indigo-100 text-indigo-700' : 'bg-emerald-100 text-emerald-700'
                         }`}>
-                          {app.type === 'CREDIT_APP' ? 'Credit App' : app.type === 'LAYAWAY' ? 'Layaway' : 'Appt Only'}
+                          {app.type === 'CREDIT_APP' ? 'Credit App' : 'Appt Only'}
                         </span>
                       </td>
                       <td className="px-6 py-4">
@@ -938,39 +946,23 @@ const Dashboard: React.FC<Props> = ({ onLogout, onExit, showToast }) => {
                     </div>
 
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                      {selectedApp.type !== 'LAYAWAY' && (
-                        <div className={`p-6 rounded-3xl border border-slate-100 text-center shadow-sm ${getScoreColor(selectedApp.applicant?.internalScore || 0)}`}>
-                          <p className="text-[10px] font-black uppercase opacity-60 tracking-widest mb-1">Approval Score</p>
-                          <p className="text-4xl font-black leading-none">{selectedApp.applicant?.internalScore || 0}</p>
-                        </div>
-                      )}
+                      <div className={`p-6 rounded-3xl border border-slate-100 text-center shadow-sm ${getScoreColor(selectedApp.applicant?.internalScore || 0)}`}>
+                        <p className="text-[10px] font-black uppercase opacity-60 tracking-widest mb-1">Approval Score</p>
+                        <p className="text-4xl font-black leading-none">{selectedApp.applicant?.internalScore || 0}</p>
+                      </div>
                       <div className="p-6 bg-slate-50 rounded-3xl border border-slate-100 text-center shadow-sm">
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{selectedApp.type === 'LAYAWAY' ? 'Monthly layaway payment' : 'Monthly Income'}</p>
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Monthly Income</p>
                         <p className="text-2xl font-bold text-slate-900 leading-none">${selectedApp.applicant?.monthlyIncome || 0}</p>
                       </div>
                       <div className="p-6 bg-slate-50 rounded-3xl border border-slate-100 text-center shadow-sm">
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{selectedApp.type === 'LAYAWAY' ? 'Target down payment' : 'Down Payment'}</p>
-                        <p className="text-2xl font-bold text-slate-900 leading-none">${selectedApp.type === 'LAYAWAY' && selectedApp.layawayData?.targetDownPayment !== undefined && selectedApp.layawayData?.targetDownPayment !== '' ? selectedApp.layawayData.targetDownPayment : (selectedApp.applicant?.downPayment || 0)}</p>
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Down Payment</p>
+                        <p className="text-2xl font-bold text-slate-900 leading-none">${selectedApp.applicant?.downPayment || 0}</p>
                       </div>
-                      {selectedApp.type !== 'LAYAWAY' && (
-                        <div className="p-6 bg-slate-50 rounded-3xl border border-slate-100 text-center shadow-sm">
-                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Co-signer</p>
-                          <p className="text-2xl font-bold text-slate-900 leading-none">{selectedApp.cosigner ? 'YES' : 'NO'}</p>
-                        </div>
-                      )}
-                      {selectedApp.type === 'LAYAWAY' && (
-                        <div className="p-6 bg-amber-50 rounded-3xl border border-amber-100 text-center shadow-sm">
-                          <p className="text-[10px] font-black text-amber-700 uppercase tracking-widest mb-1">Preferred contact</p>
-                          <p className="text-lg font-bold text-slate-900 leading-none">{selectedApp.layawayData?.preferredContact || selectedApp.applicant?.preferredContact || 'Phone'}</p>
-                        </div>
-                      )}
+                      <div className="p-6 bg-slate-50 rounded-3xl border border-slate-100 text-center shadow-sm">
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Co-signer</p>
+                        <p className="text-2xl font-bold text-slate-900 leading-none">{selectedApp.cosigner ? 'YES' : 'NO'}</p>
+                      </div>
                     </div>
-                    {selectedApp.type === 'LAYAWAY' && selectedApp.layawayData?.notes && (
-                      <div className="p-4 rounded-2xl bg-amber-50 border border-amber-100">
-                        <p className="text-[10px] font-black text-amber-700 uppercase tracking-widest mb-1">Layaway notes</p>
-                        <p className="text-slate-700 text-sm">{selectedApp.layawayData.notes}</p>
-                      </div>
-                    )}
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
                       <section className="space-y-6">
@@ -999,6 +991,10 @@ const Dashboard: React.FC<Props> = ({ onLogout, onExit, showToast }) => {
                             masked={!revealedFields[selectedApp.id]}
                           />
                           <DataRow label="Current Address" value={selectedApp.applicant?.currentAddress || 'No address'} />
+                          <div className="grid grid-cols-2 gap-4">
+                            <DataRow label="City" value={selectedApp.applicant?.city || 'N/A'} />
+                            <DataRow label="State" value={selectedApp.applicant?.state || 'N/A'} />
+                          </div>
                           <DataRow label="Years at Address" value={selectedApp.applicant?.yearsAtAddress || 'N/A'} />
                           {selectedApp.applicant?.wantAppointment && (
                             <>
@@ -1195,7 +1191,7 @@ const Dashboard: React.FC<Props> = ({ onLogout, onExit, showToast }) => {
                   <PrintField label="Phone Number" value={selectedApp.applicant?.phone || 'No phone'} />
                   <PrintField label="Date of Birth" value={selectedApp.applicant?.dob || 'N/A'} />
                   <PrintField label="Email Address" value={selectedApp.applicant?.email || 'No email'} />
-                  <PrintField label="Current Address" value={selectedApp.applicant?.currentAddress || 'No address'} />
+                  <PrintField label="Current Address" value={`${selectedApp.applicant?.currentAddress || ''}${selectedApp.applicant?.city ? `, ${selectedApp.applicant.city}` : ''}${selectedApp.applicant?.state ? `, ${selectedApp.applicant.state}` : ''}`} />
                   <PrintField label="Employer Name" value={selectedApp.applicant?.employerName || 'N/A'} />
                   <PrintField label="Job Title" value={selectedApp.applicant?.jobTitle || 'N/A'} />
                 </div>

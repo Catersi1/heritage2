@@ -10,10 +10,10 @@ import SuccessScreen from './components/SuccessScreen';
 import ProcessExplanation from './components/ProcessExplanation';
 import HomeCustomizer from './components/HomeCustomizer';
 import AppointmentOnlyForm from './components/AppointmentOnlyForm';
-import LayawaySignupPage from './components/LayawaySignupPage';
 import SummaryForm from './components/SummaryForm';
 import DepositReceiptForm from './components/DepositReceiptForm';
 import PaymentAuthForm from './components/PaymentAuthForm';
+import CreditBuilding from './components/CreditBuilding';
 import Toast from './components/Toast';
 import { storageService } from './services/storageService';
 import { t } from './constants';
@@ -221,11 +221,8 @@ const App: React.FC = () => {
         isComplete: true
       };
 
-      const { savedToCloud, cloudError } = await storageService.saveApplication(newApp);
+      await storageService.saveApplication(newApp);
       showToast(language === 'English' ? 'Final application submitted successfully' : 'Solicitud final enviada con éxito');
-      if (!savedToCloud && cloudError && storageService.isCloudEnabled()) {
-        showToast(language === 'English' ? 'Saved locally but could not sync to cloud. Error: ' + cloudError : 'Guardado localmente pero no se pudo sincronizar. Error: ' + cloudError, 'error');
-      }
       setCurrentStep('SUCCESS');
       
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -277,11 +274,9 @@ const App: React.FC = () => {
       isComplete: true
     };
 
-    const { savedToCloud, cloudError } = await storageService.saveApplication(newApp);
+    await storageService.saveApplication(newApp);
     showToast(language === 'English' ? 'Appointment request saved and uploaded' : 'Solicitud de cita guardada y cargada');
-    if (!savedToCloud && cloudError && storageService.isCloudEnabled()) {
-      showToast(language === 'English' ? 'Saved locally but could not sync to cloud. Error: ' + cloudError : 'Guardado localmente pero no se pudo sincronizar. Error: ' + cloudError, 'error');
-    }
+    
     setCurrentStep('SUCCESS');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -338,18 +333,10 @@ const App: React.FC = () => {
               onStart={() => setCurrentStep('PROCESS')} 
               onCustomizer={() => setCurrentStep('CUSTOMIZER')}
               onAppointment={() => setCurrentStep('APPOINTMENT_ONLY')}
-              onStartLayaway={() => setCurrentStep('LAYAWAY_SIGNUP')}
+              onCreditBuilding={() => setCurrentStep('CREDIT_BUILDING')}
             />
             <SkipButton to="PROCESS" />
           </>
-        );
-      case 'LAYAWAY_SIGNUP':
-        return (
-          <LayawaySignupPage
-            language={language}
-            onBack={() => setCurrentStep('LANDING')}
-            onStartCreditApp={() => setCurrentStep('PROCESS')}
-          />
         );
       case 'PROCESS':
         return (
@@ -463,12 +450,20 @@ const App: React.FC = () => {
             <SkipButton to="SUCCESS" />
           </>
         );
+      case 'CREDIT_BUILDING':
+        return (
+          <CreditBuilding 
+            language={language}
+            onBack={() => setCurrentStep('LANDING')}
+            onStartApp={() => setCurrentStep('PROCESS')}
+          />
+        );
       case 'SUCCESS':
         return <SuccessScreen language={language} applicant={applicantData} onRestart={() => returnToPublic()} />;
       case 'ADMIN_DASHBOARD':
         return <Dashboard onLogout={handleLogout} onExit={returnToPublic} showToast={showToast} />;
       default:
-        return <LandingPage language={language} setLanguage={setLanguage} onStart={() => setCurrentStep('PROCESS')} onCustomizer={() => setCurrentStep('CUSTOMIZER')} onAppointment={() => setCurrentStep('APPOINTMENT_ONLY')} />;
+        return <LandingPage language={language} setLanguage={setLanguage} onStart={() => setCurrentStep('PROCESS')} onCustomizer={() => setCurrentStep('CUSTOMIZER')} onAppointment={() => setCurrentStep('APPOINTMENT_ONLY')} onCreditBuilding={() => setCurrentStep('CREDIT_BUILDING')} />;
     }
   };
 
